@@ -1,0 +1,226 @@
+{
+  "app": {
+    "pkg": "com.ss.android.ugc.aweme",
+    "name": "抖音",
+    "main_activity": "com.ss.android.ugc.aweme.splash.SplashActivity"
+  },
+  "config": {
+    "globals": {
+      "timeout": 10000,
+      "swipe_duration": 500,
+      "retry_count": 3,
+      "wait_after": 1000
+    },
+    "task_group_defaults": {
+      "enabled": true,
+      "level": 1,
+      "wait_after": 2000,
+      "timeout": 300000
+    },
+    "task_defaults": {
+      "enabled": true,
+      "wait_after": 1000,
+      "timeout": 30000,
+      "retry": 3,
+      "repeat": 1
+    }
+  },
+  "task_groups": [
+    {
+      "id": "daily_checkin",
+      "name": "每日签到任务组",
+      "desc": "完成抖音每日签到相关任务",
+      "level": 1,
+      "enabled": true,
+      "wait_after": 2000,
+      "timeout": 300000,
+      "conditions": [
+        {
+          "type": "element_exists",
+          "selector": "我",
+          "timeout": 5000
+        }
+      ],
+      "retry_policy": {
+        "max_retries": 2,
+        "retry_delay": 3000,
+        "backoff_multiplier": 1.5,
+        "retry_on_failure": true
+      },
+      "tasks": [
+        {
+          "id": "open_profile",
+          "name": "打开个人页面",
+          "desc": "点击底部导航栏的我按钮",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 10000,
+          "enabled": true,
+          "params": {
+            "text": "我",
+            "selector": "我",
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 3,
+            "retry_delay": 2000
+          }
+        },
+        {
+          "id": "check_signin_status",
+          "name": "检查签到状态",
+          "desc": "检查是否已经签到，如果已签到则跳过后续任务",
+          "type": "wait_element",
+          "priority": "HIGH",
+          "timeout": 5000,
+          "enabled": true,
+          "params": {
+            "text": "已签到",
+            "selector": "已签到",
+            "action_on_found": "exit_group",
+            "action_on_not_found": "continue"
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        },
+        {
+          "id": "find_checkin_button",
+          "name": "查找签到按钮",
+          "desc": "在个人页面查找签到相关按钮",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 10000,
+          "enabled": true,
+          "params": {
+            "text": "签到",
+            "selector": "签到",
+            "fallback": "每日签到",
+            "wait_after": 1500
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 3,
+            "retry_delay": 2000
+          }
+        },
+        {
+          "id": "complete_checkin",
+          "name": "完成签到",
+          "desc": "点击签到按钮完成签到",
+          "type": "click_text",
+          "priority": "HIGH",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "立即签到",
+            "selector": "立即签到",
+            "fallback": "签到",
+            "wait_after": 3000
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 2,
+            "retry_delay": 2000
+          }
+        }
+      ]
+    },
+    {
+      "id": "browse_videos",
+      "name": "浏览视频任务组",
+      "desc": "浏览推荐视频获取积分",
+      "level": 2,
+      "enabled": true,
+      "wait_after": 1000,
+      "timeout": 600000,
+      "dependencies": ["daily_checkin"],
+      "retry_policy": {
+        "max_retries": 1,
+        "retry_delay": 2000,
+        "retry_on_failure": false
+      },
+      "tasks": [
+        {
+          "id": "go_to_home",
+          "name": "返回首页",
+          "desc": "点击首页按钮返回推荐页面",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "首页",
+            "selector": "首页",
+            "wait_after": 2000
+          }
+        },
+        {
+          "id": "browse_video_loop",
+          "name": "循环浏览视频",
+          "desc": "上滑浏览多个视频",
+          "type": "custom",
+          "priority": "NORMAL",
+          "timeout": 300000,
+          "enabled": true,
+          "params": {
+            "action": "swipe_up_loop",
+            "count": 10,
+            "interval": 8000,
+            "watch_duration": 6000,
+            "random_delay": true,
+            "min_delay": 5000,
+            "max_delay": 12000
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "interaction_tasks",
+      "name": "互动任务组",
+      "desc": "点赞、评论、分享等互动任务",
+      "level": 3,
+      "enabled": false,
+      "wait_after": 1000,
+      "timeout": 300000,
+      "dependencies": ["browse_videos"],
+      "tasks": [
+        {
+          "id": "random_like",
+          "name": "随机点赞",
+          "desc": "随机对视频进行点赞",
+          "type": "click_element",
+          "priority": "LOW",
+          "timeout": 5000,
+          "enabled": true,
+          "params": {
+            "selector": "点赞",
+            "probability": 0.3,
+            "wait_after": 1000
+          }
+        },
+        {
+          "id": "random_follow",
+          "name": "随机关注",
+          "desc": "随机关注作者",
+          "type": "click_text",
+          "priority": "LOW",
+          "timeout": 5000,
+          "enabled": true,
+          "params": {
+            "text": "关注",
+            "selector": "关注",
+            "probability": 0.1,
+            "wait_after": 1000
+          }
+        }
+      ]
+    }
+  ]
+}

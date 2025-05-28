@@ -1,14 +1,14 @@
 package com.g2s.phoenix.core
 
-import com.g2s.phoenix.model.*
-import com.g2s.phoenix.core.scheduler.*
-import com.g2s.phoenix.core.engine.*
-import com.g2s.phoenix.core.resilience.*
-import com.g2s.phoenix.core.resilience.HealthCheckResult
 import com.g2s.phoenix.config.*
 import com.g2s.phoenix.config.ConfigSource
-import com.g2s.phoenix.runtime.monitoring.*
+import com.g2s.phoenix.core.engine.*
+import com.g2s.phoenix.core.resilience.*
+import com.g2s.phoenix.core.scheduler.*
+import com.g2s.phoenix.core.selector.OcrElementSelector
+import com.g2s.phoenix.model.*
 import com.g2s.phoenix.plugins.*
+import com.g2s.phoenix.runtime.monitoring.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class PhoenixCore private constructor(
     private val configDir: File,
+    private val context: android.content.Context? = null,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 ) {
 
@@ -33,10 +34,18 @@ class PhoenixCore private constructor(
         /**
          * 获取凤凰系统实例
          */
-        fun getInstance(configDir: File): PhoenixCore {
+        fun getInstance(configDir: File, context: android.content.Context? = null): PhoenixCore {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: PhoenixCore(configDir).also { INSTANCE = it }
+                INSTANCE ?: PhoenixCore(configDir, context).also { INSTANCE = it }
             }
+        }
+        
+        /**
+         * 获取已初始化的凤凰系统实例
+         * @throws IllegalStateException 如果实例尚未初始化
+         */
+        fun getInstance(): PhoenixCore {
+            return INSTANCE ?: throw IllegalStateException("PhoenixCore未初始化，请先调用getInstance(configDir)")
         }
         
         /**
@@ -55,6 +64,15 @@ class PhoenixCore private constructor(
     private lateinit var resilienceCore: ResilienceCore
     private lateinit var monitorSystem: MonitorSystem
     private lateinit var pluginManager: PluginManager
+    
+    lateinit var taskEntryManager: TaskEntryManager
+        private set
+    lateinit var taskSelectionManager: TaskSelectionManager
+        private set
+    lateinit var ocrElementSelector: OcrElementSelector
+        private set
+    
+    private lateinit var taskGroupManager: TaskGroupManager
 
     // 系统状态
     private val isInitialized = AtomicBoolean(false)
@@ -235,7 +253,7 @@ class PhoenixCore private constructor(
                 logInfo("任务提交成功", mapOf(
                     "taskId" to task.id,
                     "taskName" to task.name,
-                    "taskType" to task.type.name
+                    "taskType" to task.type // task.type 已经是 String 类型
                 ))
             } else {
                 logError("任务提交失败", null, mapOf(
@@ -299,6 +317,13 @@ class PhoenixCore private constructor(
     }
 
     /**
+     * 获取配置目录
+     */
+    fun getConfigDirectory(): File {
+        return configDir
+    }
+    
+    /**
      * 获取系统统计信息
      */
     suspend fun getSystemStatistics(): SystemStatistics {
@@ -344,6 +369,21 @@ class PhoenixCore private constructor(
     }
 
     /**
+     * 获取任务入口管理器
+     */
+
+
+    /**
+     * 获取任务组管理器
+     */
+    fun getTaskGroupManager(): TaskGroupManager = taskGroupManager
+
+    /**
+     * 获取OCR控件选择器
+     */
+
+
+    /**
      * 监听系统事件
      */
     fun observeSystemEvents(): Flow<SystemEvent> {
@@ -386,6 +426,22 @@ class PhoenixCore private constructor(
         
         // 初始化韧性核心
         resilienceCore = PhoenixResilienceCore(config, scope)
+        
+        // 初始化OCR控件选择器
+        ocrElementSelector = OcrElementSelector()
+        
+        // 初始化任务组管理器
+        taskGroupManager = TaskGroupManager()
+        
+        // 初始化任务入口管理器
+        taskEntryManager = TaskEntryManager()
+        
+        // 初始化任务选择管理器（统一任务入口）
+        taskSelectionManager = TaskSelectionManager(
+            jsonTaskLoader = JsonTaskLoader(),
+            taskEntryManager = taskEntryManager,
+            context = context
+        )
         
         // 初始化任务调度器
         taskScheduler = SmartTaskScheduler(config, scope)

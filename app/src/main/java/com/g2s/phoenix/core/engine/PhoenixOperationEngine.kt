@@ -141,22 +141,33 @@ class PhoenixOperationEngine(
                 )
                 
                 // 根据任务类型执行相应操作
-                val result = when (task.type) {
-                    TaskType.APP_OPERATION -> executeAppOperation(task, context)
-                    TaskType.SYSTEM_COMMAND -> executeSystemCommand(task, context)
-                    TaskType.FILE_OPERATION -> executeFileOperation(task, context)
-                    TaskType.NETWORK_REQUEST -> executeNetworkRequest(task, context)
-                    TaskType.CUSTOM_PLUGIN -> executeCustomPlugin(task, context)
+                val operationResult = when (task.type) {
+                    TaskType.APP_OPERATION.name -> executeAppOperation(task, context)
+                    TaskType.SYSTEM_COMMAND.name -> executeSystemCommand(task, context)
+                    TaskType.FILE_OPERATION.name -> executeFileOperation(task, context)
+                    TaskType.NETWORK_REQUEST.name -> executeNetworkRequest(task, context)
+                    TaskType.CUSTOM_PLUGIN.name -> executeCustomPlugin(task, context)
+                    else -> {
+                        // 处理未知的任务类型
+                        // 直接返回TaskResult，因为这是特殊情况
+                        executionStatus.set(ExecutionStatus.COMPLETED)
+                        return TaskResult(
+                            success = false,
+                            message = "未知的任务类型: ${task.type}",
+                            executionTime = 0L // 或者记录实际的少量处理时间
+                        )
+                    }
                 }
                 
                 executionStatus.set(ExecutionStatus.COMPLETED)
                 
-                TaskResult(
-                    success = result.success,
-                    message = result.message,
-                    data = result.data,
+                // 将OperationResult转换为TaskResult
+                return TaskResult(
+                    success = operationResult.success,
+                    message = operationResult.message,
+                    data = operationResult.data,
                     executionTime = System.currentTimeMillis() - startTime,
-                    exception = result.exception
+                    exception = operationResult.exception
                 )
                 
             } catch (e: Exception) {
@@ -485,7 +496,7 @@ class PhoenixOperationEngine(
         }
 
         override fun validateParams(params: OperationParams): Boolean {
-            return params.value is Long && (params.value as Long) > 0
+            return params.value is Long && params.value > 0
         }
 
         override fun getDescription(): String = "等待指定时间"

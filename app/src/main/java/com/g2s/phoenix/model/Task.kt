@@ -1,5 +1,6 @@
 package com.g2s.phoenix.model
 
+import com.g2s.phoenix.core.scheduler.TaskSkipStrategy
 import java.util.*
 
 /**
@@ -85,13 +86,14 @@ data class TaskContext(
 data class Task(
     val id: String,
     val name: String,
-    val type: TaskType,
+    val type: String,                    // 任务类型字符串，如"click", "swipe", "input"等
     val priority: TaskPriority = TaskPriority.NORMAL,
     val timeout: Long = 30000L,
     val target: TaskTarget,
     val recovery: TaskRecovery = TaskRecovery("retry"),
     val dependencies: List<String> = emptyList(),
     val parameters: Map<String, Any> = emptyMap(),
+    val skipStrategy: TaskSkipStrategy? = null, // 任务级别的跳过策略
     val createdAt: Long = System.currentTimeMillis(),
     var status: TaskStatus = TaskStatus.PENDING,
     var lastResult: TaskResult? = null,

@@ -1,0 +1,342 @@
+{
+  "app": {
+    "pkg": "com.smile.gifmaker",
+    "name": "快手",
+    "main_activity": "com.yxcorp.gifshow.HomeActivity"
+  },
+  "config": {
+    "globals": {
+      "timeout": 12000,
+      "swipe_duration": 600,
+      "retry_count": 3,
+      "wait_after": 1200
+    },
+    "task_group_defaults": {
+      "enabled": true,
+      "level": 1,
+      "wait_after": 1500,
+      "timeout": 360000
+    },
+    "task_defaults": {
+      "enabled": true,
+      "wait_after": 1200,
+      "timeout": 25000,
+      "retry": 2,
+      "repeat": 1
+    }
+  },
+  "task_groups": [
+    {
+      "id": "kuaishou_checkin",
+      "name": "快手签到任务",
+      "desc": "完成快手每日签到和福利领取",
+      "level": 1,
+      "enabled": true,
+      "wait_after": 2000,
+      "timeout": 240000,
+      "conditions": [
+        {
+          "type": "app_launched",
+          "selector": "com.smile.gifmaker",
+          "timeout": 10000
+        }
+      ],
+      "retry_policy": {
+        "max_retries": 2,
+        "retry_delay": 3000,
+        "backoff_multiplier": 2.0,
+        "retry_on_failure": true
+      },
+      "tasks": [
+        {
+          "id": "open_mine_tab",
+          "name": "打开我的页面",
+          "desc": "点击底部我的标签",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "我的",
+            "selector": "我的",
+            "fallback": "个人中心",
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 3,
+            "retry_delay": 2000
+          }
+        },
+        {
+          "id": "check_signed_status",
+          "name": "检查签到状态",
+          "desc": "检查今日是否已签到",
+          "type": "wait_element",
+          "priority": "HIGH",
+          "timeout": 3000,
+          "enabled": true,
+          "params": {
+            "text": "已签到",
+            "selector": "已签到",
+            "action_on_found": "exit_group",
+            "action_on_not_found": "continue",
+            "wait_after": 1000
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        },
+        {
+          "id": "find_welfare_center",
+          "name": "查找福利中心",
+          "desc": "在个人页面查找福利中心入口",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 10000,
+          "enabled": true,
+          "params": {
+            "text": "福利中心",
+            "selector": "福利中心",
+            "fallback": "签到",
+            "scroll_to_find": true,
+            "max_scroll": 3,
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 2,
+            "retry_delay": 2000
+          }
+        },
+        {
+          "id": "daily_checkin",
+          "name": "每日签到",
+          "desc": "点击签到按钮完成签到",
+          "type": "click_text",
+          "priority": "HIGH",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "签到",
+            "selector": "签到",
+            "fallback": "立即签到",
+            "wait_after": 3000
+          },
+          "recovery": {
+            "on_failure": "retry",
+            "max_attempts": 2,
+            "retry_delay": 2000
+          }
+        },
+        {
+          "id": "collect_rewards",
+          "name": "收集奖励",
+          "desc": "收集签到奖励和其他福利",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 5000,
+          "enabled": true,
+          "params": {
+            "text": "领取",
+            "selector": "领取",
+            "fallback": "收下了",
+            "multiple_clicks": true,
+            "max_clicks": 3,
+            "click_interval": 1000,
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "watch_videos",
+      "name": "观看视频任务",
+      "desc": "观看推荐视频获取金币",
+      "level": 2,
+      "enabled": true,
+      "wait_after": 1000,
+      "timeout": 480000,
+      "dependencies": ["kuaishou_checkin"],
+      "retry_policy": {
+        "max_retries": 1,
+        "retry_delay": 3000,
+        "retry_on_failure": false
+      },
+      "tasks": [
+        {
+          "id": "go_to_recommend",
+          "name": "进入推荐页",
+          "desc": "点击首页推荐标签",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "推荐",
+            "selector": "推荐",
+            "fallback": "首页",
+            "wait_after": 2000
+          }
+        },
+        {
+          "id": "watch_video_series",
+          "name": "连续观看视频",
+          "desc": "上滑观看多个推荐视频",
+          "type": "custom",
+          "priority": "NORMAL",
+          "timeout": 400000,
+          "enabled": true,
+          "params": {
+            "action": "watch_videos_loop",
+            "video_count": 15,
+            "watch_duration_min": 8000,
+            "watch_duration_max": 15000,
+            "swipe_interval": 1000,
+            "random_interaction": true,
+            "interaction_probability": 0.2
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "treasure_box",
+      "name": "宝箱任务",
+      "desc": "开启宝箱获取额外奖励",
+      "level": 3,
+      "enabled": true,
+      "wait_after": 1000,
+      "timeout": 180000,
+      "dependencies": ["watch_videos"],
+      "tasks": [
+        {
+          "id": "find_treasure_box",
+          "name": "查找宝箱",
+          "desc": "在页面中查找宝箱图标",
+          "type": "click_element",
+          "priority": "NORMAL",
+          "timeout": 10000,
+          "enabled": true,
+          "params": {
+            "selector": "宝箱",
+            "fallback": "开宝箱",
+            "search_area": "bottom_right",
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "skip",
+            "max_attempts": 2
+          }
+        },
+        {
+          "id": "open_treasure_box",
+          "name": "开启宝箱",
+          "desc": "点击开启宝箱获取奖励",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "开启",
+            "selector": "开启",
+            "fallback": "立即开启",
+            "wait_after": 3000
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        },
+        {
+          "id": "claim_box_reward",
+          "name": "领取宝箱奖励",
+          "desc": "领取宝箱中的奖励",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 5000,
+          "enabled": true,
+          "params": {
+            "text": "领取",
+            "selector": "领取",
+            "fallback": "确定",
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "continue",
+            "max_attempts": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "live_room_tasks",
+      "name": "直播间任务",
+      "desc": "进入直播间完成相关任务",
+      "level": 4,
+      "enabled": false,
+      "wait_after": 2000,
+      "timeout": 300000,
+      "dependencies": ["treasure_box"],
+      "tasks": [
+        {
+          "id": "enter_live_room",
+          "name": "进入直播间",
+          "desc": "点击直播标签进入直播页面",
+          "type": "click_text",
+          "priority": "NORMAL",
+          "timeout": 8000,
+          "enabled": true,
+          "params": {
+            "text": "直播",
+            "selector": "直播",
+            "wait_after": 3000
+          }
+        },
+        {
+          "id": "watch_live_stream",
+          "name": "观看直播",
+          "desc": "在直播间停留一段时间",
+          "type": "wait",
+          "priority": "LOW",
+          "timeout": 60000,
+          "enabled": true,
+          "params": {
+            "duration": 30000,
+            "random_duration": true,
+            "min_duration": 20000,
+            "max_duration": 45000
+          }
+        },
+        {
+          "id": "send_comment",
+          "name": "发送评论",
+          "desc": "在直播间发送预设评论",
+          "type": "input_text",
+          "priority": "LOW",
+          "timeout": 10000,
+          "enabled": true,
+          "params": {
+            "input_field": "说点什么",
+            "text_options": ["666", "主播厉害", "支持", "赞"],
+            "random_text": true,
+            "send_button": "发送",
+            "wait_after": 2000
+          },
+          "recovery": {
+            "on_failure": "skip",
+            "max_attempts": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -106,6 +106,17 @@
 
     </LinearLayout>
 
+    <!-- 抖音任务按钮 -->
+    <Button
+        android:id="@+id/btn_douyin_task"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="执行抖音任务"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:textColor="@android:color/white"
+        android:textStyle="bold" />
+
     <!-- 日志显示区域 -->
     <TextView
         android:layout_width="match_parent"
