@@ -19,8 +19,11 @@ import java.util.concurrent.ConcurrentHashMap
  * 支持从多个JSON文件加载任务，每个文件代表一个独立的应用任务
  */
 class TaskSelectionManager(
-    private val jsonTaskLoader: JsonTaskLoader, // 确保类型正确
+    // JSON任务加载器
+    private val jsonTaskLoader: JsonTaskLoader, 
+    // 任务入口管理器
     private val taskEntryManager: TaskEntryManager,
+    // 上下文
     private val context: Context? = null // 添加Context参数用于访问assets
 ) {
     private val mutex = Mutex()
@@ -311,7 +314,11 @@ class TaskSelectionManager(
      */
     suspend fun startExecution(): Boolean {
         return mutex.withLock {
+            // 如果选中的任务队列为空，则返回失败,并且释放锁
             if (_selectedTasks.value.isEmpty()) {
+                // 提前返回需要显式@withLock释放锁,否则会死锁
+                // return@withLock 代表从lambda表达式中提前返回
+                // 直接return 会返回到suspend fun startExecution()的调用处x
                 return@withLock false
             }
             
@@ -333,6 +340,7 @@ class TaskSelectionManager(
                 // 开始执行
                 taskEntryManager.startExecution()
                 
+                // 释放锁 返回成功
                 true
             } catch (e: Exception) {
                 _executionStatus.value = ExecutionStatus.Failed

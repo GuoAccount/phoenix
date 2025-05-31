@@ -1,0 +1,15 @@
+{
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/build/**": true,
+        "**/gradle/**": true
+    },
+    "files.exclude": {
+        "**/.git/objects/**": true,
+        "**/build/**": true,
+        "**/gradle/**": true
+    },
+    "emmet.includeLanguages": {
+        "xml": "html"
+    }
+}

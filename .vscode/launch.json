@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "android",
+            "request": "launch",
+            "name": "Android Launch",
+            "appSrcRoot": "${workspaceRoot}/app/src/main",
+            "apkFile": "${workspaceRoot}/app/build/intermediates/apk/debug/app-debug.apk",
+            "targetDevice": "adb-adbab4ca-RR2wwR._adb-tls-connect._tcp",
+            "launchActivity": ".MainActivity"
+        }
+    ]
+}

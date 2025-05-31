@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Android Debug APK",
+            "command": "./gradlew assembleDebug",
+            "type": "shell",
+            "problemMatcher": ["$gradle"]
+        },
+        {
+            "label": "Build Android Release APK",
+            "command": "./gradlew assembleRelease",
+            "type": "shell",
+            "problemMatcher": ["$gradle"]
+        }
+    ]
+}
