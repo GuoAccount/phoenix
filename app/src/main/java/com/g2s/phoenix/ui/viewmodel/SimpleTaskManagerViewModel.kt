@@ -3,7 +3,7 @@ package com.g2s.phoenix.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.g2s.phoenix.core.PhoenixCore
-import com.g2s.phoenix.core.TaskSelectionManager
+import com.g2s.phoenix.core.task.TaskSelectionManager
 import kotlinx.coroutines.launch
 import java.io.File
 

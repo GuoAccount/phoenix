@@ -1,17 +1,13 @@
-package com.g2s.phoenix.core
+package com.g2s.phoenix.core.task
 
 import android.content.Context
 import com.g2s.phoenix.config.JsonTaskLoader 
 import com.g2s.phoenix.core.scheduler.TaskGroup
-import com.g2s.phoenix.core.scheduler.TaskGroupStatus
-import com.g2s.phoenix.model.Task
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 任务选择管理器
@@ -114,7 +110,17 @@ class TaskSelectionManager(
                                     fileName.substringBeforeLast(".json")
                                 }
                                 appTasksMap[appName] = taskConfig.taskGroups
-                                println("成功从assets加载任务配置: $fileName -> $appName")
+                                
+                                // 将任务配置同步到TaskEntryManager
+                                val loadResult = taskEntryManager.loadTaskConfigFromString(jsonContent)
+                                when (loadResult) {
+                                    is LoadResult.Success -> {
+                                        println("成功从assets加载任务配置: $fileName -> $appName，已同步到TaskEntryManager")
+                                    }
+                                    is LoadResult.Error -> {
+                                        println("任务配置同步到TaskEntryManager失败: $fileName -> $appName, 错误: ${loadResult.message}")
+                                    }
+                                }
                             }
                         } catch (e: Exception) {
                             println("加载assets任务文件失败: $fileName, 错误: ${e.message}")
@@ -166,6 +172,17 @@ class TaskSelectionManager(
                         val taskConfig = jsonTaskLoader.loadTaskConfig(jsonFile)
                         if (taskConfig != null && taskConfig.taskGroups.isNotEmpty()) {
                             appTasksMap[appName] = taskConfig.taskGroups
+                            
+                            // 将任务配置同步到TaskEntryManager
+                            val loadResult = taskEntryManager.loadTaskFromFile(jsonFile)
+                            when (loadResult) {
+                                 is LoadResult.Success -> {
+                                     println("成功从目录加载任务配置: ${jsonFile.name} -> $appName，已同步到TaskEntryManager")
+                                 }
+                                 is LoadResult.Error -> {
+                                     println("任务配置同步到TaskEntryManager失败: ${jsonFile.name} -> $appName, 错误: ${loadResult.message}")
+                                 }
+                             }
                         }
                     } catch (e: Exception) {
                         // 单个文件加载失败不影响其他文件
@@ -202,6 +219,18 @@ class TaskSelectionManager(
                     val currentTasks = _availableAppTasks.value.toMutableMap()
                     currentTasks[appName] = taskConfig.taskGroups
                     _availableAppTasks.value = currentTasks
+                    
+                    // 将任务配置同步到TaskEntryManager
+                    val loadResult = taskEntryManager.loadTaskFromFile(file)
+                    when (loadResult) {
+                         is LoadResult.Success -> {
+                             println("成功加载单个任务配置: ${file.name} -> $appName，已同步到TaskEntryManager")
+                         }
+                         is LoadResult.Error -> {
+                             println("单个任务配置同步到TaskEntryManager失败: ${file.name} -> $appName, 错误: ${loadResult.message}")
+                         }
+                     }
+                    
                     true
                 } else {
                     false

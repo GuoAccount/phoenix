@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.g2s.phoenix.core.TaskSelectionManager
+import com.g2s.phoenix.core.task.TaskSelectionManager
 import com.g2s.phoenix.ui.viewmodel.SimpleTaskManagerViewModel
 
 /**

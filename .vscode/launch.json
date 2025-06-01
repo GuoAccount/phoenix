@@ -2,12 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // 配置类型，指定为 Android 调试
             "type": "android",
+            // 请求方式，launch 表示启动调试
             "request": "launch",
+            // 配置名称，用于标识该调试配置
             "name": "Android Launch",
+            // 应用源代码根目录路径
             "appSrcRoot": "${workspaceRoot}/app/src/main",
+            // APK 文件路径，指向生成的调试 APK 文件
             "apkFile": "${workspaceRoot}/app/build/intermediates/apk/debug/app-debug.apk",
+            // 目标设备标识，用于指定调试设备
             "targetDevice": "adb-adbab4ca-RR2wwR._adb-tls-connect._tcp",
+            // 启动的 Activity 名称，指定调试时启动的主 Activity
             "launchActivity": ".MainActivity"
         }
     ]
